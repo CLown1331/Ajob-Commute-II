@@ -5,8 +5,8 @@ echo generator compiled
 # exe, filename, seed, n_limit, q_limit, k_limit, x_limit
 # sample
 ./gen input01.txt 137 5 5 5 5
-./gen input02.txt 234 5 5 5 5
-./gen input03.txt 457 5 5 5 5
+./gen input02.txt 452 5 5 5 5
+./gen input03.txt 5457 5 5 5 5
 echo sample input generated
 # small
 ./gen input04.txt 1457 25 25 25 1000
@@ -22,6 +22,9 @@ echo medium input generated
 ./gen input10.txt 5335 100000 100000 50 1000000000
 ./gen input11.txt 3457 100000 100000 50 1000000000000000000
 ./gen input12.txt 35357 100000 100000 50 1000000000000000000
+./gen input13.txt 784545 100000 100000 50 1000000000000000000
+./gen input14.txt 457655 100000 100000 50 1000000000000000000
+./gen input15.txt 3589989 100000 100000 50 1000000000000000000
 echo large input generated
 echo generated input
 g++ ajob_commute.cpp -o sol
@@ -46,4 +49,7 @@ echo medium output generated
 ./sol < input10.txt > output10.txt
 ./sol < input11.txt > output11.txt
 ./sol < input12.txt > output12.txt
+./sol < input13.txt > output13.txt
+./sol < input14.txt > output14.txt
+./sol < input15.txt > output15.txt
 echo large output generated
