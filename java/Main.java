@@ -20,7 +20,7 @@ import java.util.StringTokenizer;
  *
  * @author CLown1331
  */
-public class Main {
+class Unnamed {
     public static void main(String[] args) {
         InputStream inputStream = System.in;
         OutputStream outputStream = System.out;
@@ -33,13 +33,22 @@ public class Main {
  
     static class Solver {
         final int sz = (int)(1e5 + 10);
-        ArrayList<Integer>[] G;
+        ArrayList<ArrayList<Integer>> G;
         long f[];
         long tree[];
         long x[];
-        final long mod = (long)(1e9 + 7);
+        final int mod = (int)(1e9 + 7);
         int n, q, k;
         long ans;
+        Matrix mat;
+        long tr[];
+        int st[];
+        int en[];
+        int tim = 0;
+        int lvl[];
+        int par[];
+        int table[][];
+        int lg[];
 
         long F(int u) {
             if (f[u] != -1) return f[u];
@@ -48,42 +57,164 @@ public class Main {
             return f[u] = (f1 + f3) % mod;
         }
         
-        void dfs(int u, int pr, long sum, int d) {
-            if (u == d) {
-                ans = sum;
-                return;
+        void dfs( int fr, int u, int dep ) {
+            lvl[u] = dep;
+            par[u] = fr;
+            st[u] = ++tim;
+            for( int v: G.get(u) ) {
+                if( fr == v ) continue;
+                dfs( u, v, dep+1 );
             }
-            for (int v: G[u]) {
-                if (v != pr) {
-                    dfs(v, u, (sum + tree[v]) % mod, d);
+            en[u] = ++tim;
+        }
+
+        void init( int n ) {
+            for (int[] row: table) {
+                Arrays.fill(row, -1);
+            }
+            for( int i=0; i<n; i++ ) {
+                table[i][0] = par[i];
+            }
+            for( int j=1; ( 1 << j ) < n; j++ ) {
+                for( int i=0; i<n; i++ ) {
+                    if( table[i][j-1] == -1 ) continue;
+                    table[i][j] = table[ table[i][j-1] ][j-1];
                 }
+            }
+            for( int i=0; i<17; i++ ) lg[1 << i] = i;
+            for( int i=1; i<sz; i++ ) if( lg[i] == 0 ) lg[i] = lg[i-1];
+        }
+
+        int query( int n, int p, int q ) {
+            int log;
+            if( lvl[p] < lvl[q] ) {
+                p ^= q;
+                q ^= p;
+                p ^= q;
+            }
+            log = lg[ lvl[ p ] ];
+            for( int i=log; i>=0; i-- ) {
+                if( lvl[p] - ( 1 << i ) >= lvl[q] ) {
+                    p = table[ p ][ i ];
+                }
+            }
+            if( p == q ) return p;
+            for( int i=log; i>=0; i-- ) {
+                if( table[ p ][ i ] != -1 && table[ p ][ i ] != table[ q ][ i ] ) {
+                    p = table[ p ][ i ];
+                    q = table[ q ][ i ];
+                }
+            }
+            return par[p];
+        }
+
+        long FxFast(long x) {
+            if (x == 1) return 1;
+            if (x == 2) return 2;
+            if (x == 3) return 5;
+            Matrix h = mat.Power(x - 3);
+            long ret = 0;
+            long a = (long)h.a[0][0] * 5 % mod;
+            long b = (long)h.a[0][1] * 2 % mod;
+            long c = (long)h.a[0][2] * 1 % mod;
+            ret = (ret + a) % mod;
+            ret = (ret + b) % mod;
+            ret = (ret + c) % mod;
+            return ret;
+        }
+
+        long find_answer( int n, int p, int q ) {
+            int lca = query( n, p, q );
+            long a = qu(st[p]);
+            long b = qu(st[q]);
+            long c = tree[lca];
+            long d = (mod - ((2 * qu(st[lca])) % mod));
+            long ret = 0;
+            ret = (ret + a) % mod;
+            ret = (ret + b) % mod;
+            ret = (ret + c) % mod;
+            ret = (ret + d) % mod;
+            return ret;
+            // return qu(st[p]) + qu(st[q]) + gn[lca] - 2 * qu(st[lca]);
+        }
+
+        void upd(int x, long v) {
+            for (; x < sz * 2; x += (x & -x)) {
+                tr[x] = (tr[x] + v) % mod;
             }
         }
 
+        long qu(int x) {
+            long ret = 0;
+            for (; x > 0; x -= (x & -x)) {
+                ret = (ret + tr[x]) % mod;
+            }
+            return ret;       
+        }
+
         public void solve(int testNumber, InputReader in, OutputWriter out) {
+            
             f = new long[sz];
+
             Arrays.fill(f, -1);
+
             f[1] = 1;
             f[2] = 2;
             f[3] = 5;
+
             n = in.nextInt();
             q = in.nextInt();
             k = in.nextInt();
-            x = new long[n];
-            tree = new long[n];
-            G = (ArrayList<Integer>[])(new ArrayList[n]);
+
+            mat = new Matrix(3, mod);
+            mat.a[0][0] = k;
+            mat.a[0][1] = 0;
+            mat.a[0][2] = k - 2;
+
+            mat.a[1][0] = 1;
+            mat.a[1][1] = 0;
+            mat.a[1][2] = 0;
+
+            mat.a[2][0] = 0;
+            mat.a[2][1] = 1;
+            mat.a[2][2] = 0;
+
+            tr = new long[sz * 2 + 100];
+            x = new long[sz];
+            tree = new long[sz];
+
+            lvl = new int[sz];
+            par = new int[sz];
+            st = new int[sz * 2 + 100];
+            en = new int[sz * 2 + 100];
+            table = new int[sz][17];
+            lg = new int[sz];
+
+            G = new ArrayList<ArrayList<Integer>> ();
+
             for(int i = 0; i < n; i++) {
                 x[i] = in.nextLong();
-                tree[i] = F((int)x[i]);
-                G[i] = new ArrayList<Integer>();
+                G.add(new ArrayList<Integer>());
             }
+
             int u, v;
+
             for(int i = 1; i < n; i++) {
                 u = in.nextInt();
                 v = in.nextInt();
                 --u; --v;
-                G[u].add(v);
-                G[v].add(u);
+                G.get(u).add(v);
+                G.get(v).add(u);
+            }
+
+            dfs(-1, 0, 0);
+
+            init(n);
+
+            for (int i = 0; i < n; i++) {
+                tree[i] = FxFast(x[i]);
+                upd(st[i], tree[i]);
+                upd(en[i], mod - tree[i]);
             }
 
             int type;
@@ -96,20 +227,88 @@ public class Main {
                     u = in.nextInt();
                     v = in.nextInt();
                     --u; --v;
-                    dfs(u, -1, tree[u] % mod, v);
+                    ans = find_answer(n, u, v);
                     out.println(ans);
                 } else {
                     u = in.nextInt();
                     x_u = in.nextLong();
                     --u;
                     x[u] = x_u;
-                    tree[u] = F((int)x[u]);
+                    upd(st[u], mod - tree[u]);
+                    upd(en[u], tree[u]);
+                    tree[u] = FxFast(x[u]);
+                    upd(st[u], tree[u]);
+                    upd(en[u], mod - tree[u]);
                 }
             }
         }
  
     }
  
+    static class  Matrix {
+        int matrixSize;
+        int mod;
+        int[][] a;
+        Matrix(int matrixSize, int mod) {
+            this.matrixSize = matrixSize;   
+            this.mod = mod;
+            a = new int[matrixSize][matrixSize];
+        }
+        void Clear() {
+            for (int[] row: a) {
+                Arrays.fill(row, 0);
+            }
+        }
+        void Identity() {
+            for( int i=0; i<matrixSize; i++ ) {
+                for( int j=0; j<matrixSize; j++ ) {
+                    a[i][j] = (i == j) ? 1 : 0;
+                }
+            }
+        }
+        Matrix Add(Matrix b) {
+            Matrix temp = new Matrix(matrixSize, mod);
+            temp.Clear();
+            for (int i = 0; i <  matrixSize; i++) {
+                for (int j = 0; j < matrixSize; j++) {
+                    temp.a[i][j] = a[i][j] + b.a[i][j];
+                    if (temp.a[i][j] >= mod) {
+                        temp.a[i][j] -= mod;
+                    }
+                }
+            }
+            return temp;
+        }
+        Matrix Multiply(Matrix b) {
+            Matrix temp = new Matrix(matrixSize, mod);
+            temp.Clear();
+            for (int i = 0; i < matrixSize; i++) {
+                for (int j = 0; j < matrixSize; j++) {
+                    for (int k = 0; k < matrixSize; k++) {
+                        temp.a[i][k] += (long)a[i][j] * b.a[j][k] % mod;
+                        if (temp.a[i][k] >= mod) {
+                            temp.a[i][k] -= mod;
+                        }
+                    }
+                }
+            }
+            return temp;
+        }
+        Matrix Power(long x) {
+            Matrix ans = new Matrix(matrixSize, mod);
+            Matrix num = this;
+            ans.Identity();
+            while (x > 0) {
+                if ((x & 1) == 1) {
+                    ans = ans.Multiply(num);
+                }
+                num = num.Multiply(num);
+                x >>= 1;
+            }
+            return ans;
+        }
+    };
+
     static class InputReader {
         public BufferedReader reader;
         public StringTokenizer tokenizer;
